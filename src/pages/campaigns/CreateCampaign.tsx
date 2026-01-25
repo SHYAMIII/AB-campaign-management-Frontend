@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { ArrowLeft, Phone, Mail, FileSpreadsheet, Database } from 'lucide-react';
+import { ArrowLeft, Phone, Mail, FileSpreadsheet, Database, Upload, X, FileText } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -70,6 +70,8 @@ const voiceModels = [
 export default function CreateCampaign() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [excelFile, setExcelFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<CampaignFormData>({
     resolver: zodResolver(campaignSchema),
@@ -90,6 +92,26 @@ export default function CreateCampaign() {
 
   const communicationType = form.watch('communication_type');
   const campaignType = form.watch('campaign_type');
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const validExtensions = ['.xlsx', '.xls', '.csv'];
+      const fileExtension = file.name.toLowerCase().slice(file.name.lastIndexOf('.'));
+      if (!validExtensions.includes(fileExtension)) {
+        toast.error('Please upload a valid Excel or CSV file');
+        return;
+      }
+      setExcelFile(file);
+    }
+  };
+
+  const removeFile = () => {
+    setExcelFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
   const onSubmit = async (data: CampaignFormData) => {
     setIsLoading(true);
@@ -200,6 +222,58 @@ export default function CreateCampaign() {
                     </FormItem>
                   )}
                 />
+
+                {/* Excel File Upload - shown when EXCEL is selected */}
+                {campaignType === 'EXCEL' && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Upload Leads File</label>
+                    <div className="space-y-3">
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleFileChange}
+                        accept=".xlsx,.xls,.csv"
+                        className="hidden"
+                      />
+                      {!excelFile ? (
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border p-6 text-muted-foreground hover:border-primary/50 hover:bg-muted/50 transition-colors"
+                        >
+                          <Upload className="h-5 w-5" />
+                          <span>Click to upload Excel or CSV file</span>
+                        </button>
+                      ) : (
+                        <div className="flex items-center justify-between rounded-lg border bg-muted/50 p-3">
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                              <FileText className="h-5 w-5 text-primary" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium">{excelFile.name}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {(excelFile.size / 1024).toFixed(1)} KB
+                              </p>
+                            </div>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={removeFile}
+                            className="h-8 w-8"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      )}
+                      <p className="text-xs text-muted-foreground">
+                        Supported formats: .xlsx, .xls, .csv
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 {/* Communication Type Selection */}
                 <FormField
