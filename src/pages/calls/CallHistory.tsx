@@ -41,6 +41,7 @@ import {
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { queueApi } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import type { QueueStats } from '@/types';
 
@@ -58,7 +59,27 @@ interface QueuedCall {
   sentiment_score?: number;
 }
 
+// Demo data
+const DEMO_CALLS: QueuedCall[] = [
+  { id: 1, lead_id: 'L001', lead_name: 'John Smith', contact_number: '+1 555-0101', status: 'DONE', campaign_id: 'demo-1', created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), call_duration: 245, sentiment_score: 0.85, call_summary: 'Positive call. Customer interested in enterprise plan. Scheduled follow-up demo for next week.', call_transcript: 'Agent: Hi, this is Sarah from AI SDR...\nJohn: Hello Sarah, yes I received your email...\nAgent: Great! I wanted to discuss our enterprise solutions...' },
+  { id: 2, lead_id: 'L002', lead_name: 'Sarah Johnson', contact_number: '+1 555-0102', status: 'QUEUED', campaign_id: 'demo-1', created_at: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString() },
+  { id: 3, lead_id: 'L003', lead_name: 'Michael Brown', contact_number: '+1 555-0103', status: 'IN_PROGRESS', campaign_id: 'demo-2', created_at: new Date().toISOString() },
+  { id: 4, lead_id: 'L004', lead_name: 'Emily Davis', contact_number: '+1 555-0104', status: 'DONE', campaign_id: 'demo-1', created_at: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(), call_duration: 180, sentiment_score: 0.72, call_summary: 'Customer requested more information via email. Will review and get back to us.' },
+  { id: 5, lead_id: 'L005', lead_name: 'Robert Wilson', contact_number: '+1 555-0105', status: 'FAILED', campaign_id: 'demo-3', created_at: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString() },
+  { id: 6, lead_id: 'L006', lead_name: 'Jennifer Taylor', contact_number: '+1 555-0106', status: 'DONE', campaign_id: 'demo-2', created_at: new Date(Date.now() - 30 * 60 * 1000).toISOString(), call_duration: 95, sentiment_score: 0.35, call_summary: 'Customer not interested at this time. Do not contact for 6 months.' },
+  { id: 7, lead_id: 'L007', lead_name: 'David Martinez', contact_number: '+1 555-0107', status: 'DONE', campaign_id: 'demo-1', created_at: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(), call_duration: 320, sentiment_score: 0.92, call_summary: 'Excellent call! Customer wants to start trial immediately. Sent trial access credentials.' },
+];
+
+const DEMO_STATS: QueueStats = {
+  total: 1250,
+  queued: 380,
+  in_progress: 5,
+  done: 820,
+  failed: 45,
+};
+
 export default function CallHistory() {
+  const { isDemoMode } = useAuth();
   const [calls, setCalls] = useState<QueuedCall[]>([]);
   const [stats, setStats] = useState<QueueStats | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -68,9 +89,15 @@ export default function CallHistory() {
 
   useEffect(() => {
     loadData();
-  }, [statusFilter]);
+  }, [statusFilter, isDemoMode]);
 
   const loadData = async () => {
+    if (isDemoMode) {
+      setCalls(DEMO_CALLS);
+      setStats(DEMO_STATS);
+      setIsLoading(false);
+      return;
+    }
     try {
       const [callsRes, statsRes] = await Promise.all([
         queueApi.getCalls({

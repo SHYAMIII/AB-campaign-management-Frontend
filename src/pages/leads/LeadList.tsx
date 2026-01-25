@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { queueApi, campaignApi } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
 interface QueuedCall {
@@ -39,7 +40,25 @@ interface CampaignOption {
   campaign_name: string;
 }
 
+// Demo data
+const DEMO_LEADS: QueuedCall[] = [
+  { id: 1, lead_id: 'L001', lead_name: 'John Smith', contact_number: '+1 555-0101', status: 'DONE', campaign_id: 'demo-1', created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString() },
+  { id: 2, lead_id: 'L002', lead_name: 'Sarah Johnson', contact_number: '+1 555-0102', status: 'QUEUED', campaign_id: 'demo-1', created_at: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString() },
+  { id: 3, lead_id: 'L003', lead_name: 'Michael Brown', contact_number: '+1 555-0103', status: 'IN_PROGRESS', campaign_id: 'demo-2', created_at: new Date().toISOString() },
+  { id: 4, lead_id: 'L004', lead_name: 'Emily Davis', contact_number: '+1 555-0104', status: 'DONE', campaign_id: 'demo-1', created_at: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString() },
+  { id: 5, lead_id: 'L005', lead_name: 'Robert Wilson', contact_number: '+1 555-0105', status: 'FAILED', campaign_id: 'demo-3', created_at: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString() },
+  { id: 6, lead_id: 'L006', lead_name: 'Jennifer Taylor', contact_number: '+1 555-0106', status: 'QUEUED', campaign_id: 'demo-2', created_at: new Date(Date.now() - 30 * 60 * 1000).toISOString() },
+  { id: 7, lead_id: 'L007', lead_name: 'David Martinez', contact_number: '+1 555-0107', status: 'DONE', campaign_id: 'demo-1', created_at: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString() },
+];
+
+const DEMO_CAMPAIGNS: CampaignOption[] = [
+  { campaign_id: 'demo-1', campaign_name: 'Q1 Enterprise Outreach' },
+  { campaign_id: 'demo-2', campaign_name: 'Product Launch Email' },
+  { campaign_id: 'demo-3', campaign_name: 'SMB Follow-up Calls' },
+];
+
 export default function LeadList() {
+  const { isDemoMode } = useAuth();
   const [calls, setCalls] = useState<QueuedCall[]>([]);
   const [campaigns, setCampaigns] = useState<CampaignOption[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -49,9 +68,15 @@ export default function LeadList() {
 
   useEffect(() => {
     loadData();
-  }, [statusFilter, campaignFilter]);
+  }, [statusFilter, campaignFilter, isDemoMode]);
 
   const loadData = async () => {
+    if (isDemoMode) {
+      setCalls(DEMO_LEADS);
+      setCampaigns(DEMO_CAMPAIGNS);
+      setIsLoading(false);
+      return;
+    }
     try {
       const [callsRes, campaignsRes] = await Promise.all([
         queueApi.getCalls({
