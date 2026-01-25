@@ -18,18 +18,74 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { campaignApi, queueApi } from '@/lib/api';
-import type { Campaign, QueueStats } from '@/types';
+import { useAuth } from '@/contexts/AuthContext';
+import type { Campaign, QueueStats, CampaignStatus, CampaignType, CommunicationType } from '@/types';
+
+// Demo data
+const DEMO_CAMPAIGNS: Campaign[] = [
+  {
+    campaign_id: 'demo-campaign-1',
+    campaign_name: 'Q1 Enterprise Outreach',
+    campaign_type: 'CRM' as CampaignType,
+    communication_type: 'CALL' as CommunicationType,
+    status: 'ACTIVE' as CampaignStatus,
+    start_time: '09:00',
+    end_time: '17:00',
+    timezone: 'America/New_York',
+    campaign_prompt: 'Schedule product demos',
+    agent_name: 'Sarah',
+    created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    campaign_id: 'demo-campaign-2',
+    campaign_name: 'Product Launch Email',
+    campaign_type: 'EXCEL' as CampaignType,
+    communication_type: 'EMAIL' as CommunicationType,
+    status: 'PAUSED' as CampaignStatus,
+    start_time: '08:00',
+    end_time: '18:00',
+    timezone: 'America/Los_Angeles',
+    created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    campaign_id: 'demo-campaign-3',
+    campaign_name: 'SMB Follow-up Calls',
+    campaign_type: 'EXCEL' as CampaignType,
+    communication_type: 'CALL' as CommunicationType,
+    status: 'DRAFT' as CampaignStatus,
+    start_time: '10:00',
+    end_time: '16:00',
+    timezone: 'America/Chicago',
+    created_at: new Date().toISOString(),
+  },
+];
+
+const DEMO_QUEUE_STATS: QueueStats = {
+  total: 1250,
+  queued: 380,
+  in_progress: 5,
+  done: 820,
+  failed: 45,
+};
 
 export default function Dashboard() {
+  const { isDemoMode } = useAuth();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [queueStats, setQueueStats] = useState<QueueStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [isDemoMode]);
 
   const loadData = async () => {
+    if (isDemoMode) {
+      setCampaigns(DEMO_CAMPAIGNS);
+      setQueueStats(DEMO_QUEUE_STATS);
+      setIsLoading(false);
+      return;
+    }
+    
     try {
       const [campaignsRes, queueRes] = await Promise.all([
         campaignApi.list(),

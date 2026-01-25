@@ -8,20 +8,45 @@ interface AuthContextType {
   currentAgent: Agent | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  isDemoMode: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   switchAgent: (agentId: string) => Promise<void>;
   refreshAgents: () => Promise<void>;
+  enterDemoMode: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// Demo data for preview mode
+const DEMO_USER: User = {
+  email: 'demo@example.com',
+  agent_id: 'demo-agent-001',
+  can_manage_agents: true,
+};
+
+const DEMO_AGENTS: Agent[] = [
+  {
+    agent_id: 'demo-agent-001',
+    agent_name: 'Sales Team East',
+    is_active: true,
+    created_at: new Date().toISOString(),
+  },
+  {
+    agent_id: 'demo-agent-002',
+    agent_name: 'Sales Team West',
+    is_active: true,
+    created_at: new Date().toISOString(),
+  },
+];
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [agents, setAgents] = useState<Agent[]>([]);
   const [currentAgent, setCurrentAgent] = useState<Agent | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDemoMode, setIsDemoMode] = useState(false);
 
   const isAuthenticated = !!user;
 
@@ -31,6 +56,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const checkAuth = async () => {
     try {
+      // Check for demo mode first
+      const demoMode = localStorage.getItem('demo_mode');
+      if (demoMode === 'true') {
+        setIsDemoMode(true);
+        setUser(DEMO_USER);
+        setAgents(DEMO_AGENTS);
+        setCurrentAgent(DEMO_AGENTS[0]);
+        setIsLoading(false);
+        return;
+      }
+
       const agentId = localStorage.getItem('agent_id');
       if (agentId) {
         await refreshAgents();
@@ -47,6 +83,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const enterDemoMode = () => {
+    localStorage.setItem('demo_mode', 'true');
+    setIsDemoMode(true);
+    setUser(DEMO_USER);
+    setAgents(DEMO_AGENTS);
+    setCurrentAgent(DEMO_AGENTS[0]);
+  };
+
   const login = async (email: string, password: string) => {
     const response = await authApi.login(email, password);
     const userData: User = {
@@ -57,6 +101,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(userData);
     localStorage.setItem('agent_id', response.agent_id);
     localStorage.setItem('user', JSON.stringify(userData));
+    localStorage.removeItem('demo_mode');
+    setIsDemoMode(false);
     await refreshAgents();
   };
 
@@ -66,17 +112,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
-      await authApi.logout();
+      if (!isDemoMode) {
+        await authApi.logout();
+      }
     } finally {
       setUser(null);
       setAgents([]);
       setCurrentAgent(null);
+      setIsDemoMode(false);
       localStorage.removeItem('agent_id');
       localStorage.removeItem('user');
+      localStorage.removeItem('demo_mode');
     }
   };
 
   const refreshAgents = async () => {
+    if (isDemoMode) {
+      setAgents(DEMO_AGENTS);
+      setCurrentAgent(DEMO_AGENTS[0]);
+      return;
+    }
     try {
       const response = await agentApi.list();
       setAgents(response.agents);
@@ -89,6 +144,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const switchAgent = async (agentId: string) => {
+    if (isDemoMode) {
+      const agent = DEMO_AGENTS.find(a => a.agent_id === agentId);
+      setCurrentAgent(agent || null);
+      return;
+    }
     const response = await agentApi.switch(agentId);
     localStorage.setItem('agent_id', agentId);
     const agent = agents.find(a => a.agent_id === agentId);
@@ -103,11 +163,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         currentAgent,
         isLoading,
         isAuthenticated,
+        isDemoMode,
         login,
         register,
         logout,
         switchAgent,
         refreshAgents,
+        enterDemoMode,
       }}
     >
       {children}
