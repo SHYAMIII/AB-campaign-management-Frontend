@@ -60,35 +60,22 @@ export default function Login() {
   };
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-background p-4 overflow-hidden">
-      {/* Background decorations */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-primary/5 blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-primary/10 blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[600px] w-[600px] rounded-full bg-gradient-to-br from-primary/5 to-transparent blur-3xl" />
-      </div>
-
-      {/* Grid pattern */}
-      <div className="absolute inset-0 bg-[linear-gradient(hsl(var(--border))_1px,transparent_1px),linear-gradient(90deg,hsl(var(--border))_1px,transparent_1px)] bg-[size:60px_60px] [mask-image:radial-gradient(ellipse_at_center,black_20%,transparent_70%)] opacity-30" />
-
-      <div className="relative w-full max-w-md space-y-8 animate-fade-in">
+    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+      <div className="w-full max-w-md space-y-6">
         <div className="flex flex-col items-center space-y-3 text-center">
-          <div className="relative">
-            <div className="absolute inset-0 rounded-2xl gradient-primary blur-lg opacity-50 animate-pulse-soft" />
-            <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl gradient-primary shadow-lg">
-              <Zap className="h-9 w-9 text-primary-foreground" />
-            </div>
+          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary">
+            <Zap className="h-6 w-6 text-primary-foreground" />
           </div>
           <div className="space-y-1">
-            <h1 className="text-3xl font-bold tracking-tight">AI SDR Platform</h1>
-            <p className="text-muted-foreground">Automate your outbound sales with intelligent AI agents</p>
+            <h1 className="text-2xl font-semibold tracking-tight">AI SDR Platform</h1>
+            <p className="text-sm text-muted-foreground">Automate your outbound sales</p>
           </div>
         </div>
 
-        <Card className="backdrop-blur-sm bg-card/95 border-border/50 shadow-xl">
+        <Card>
           <CardHeader className="space-y-1 pb-4">
-            <CardTitle className="text-xl">Welcome back</CardTitle>
-            <CardDescription>Enter your credentials to access your dashboard</CardDescription>
+            <CardTitle className="text-lg">Sign in</CardTitle>
+            <CardDescription>Enter your credentials to continue</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <Form {...form}>
@@ -141,15 +128,8 @@ export default function Login() {
                     </FormItem>
                   )}
                 />
-                <Button type="submit" className="w-full h-11 font-medium shadow-md hover:shadow-lg transition-all" disabled={isLoading}>
-                  {isLoading ? (
-                    <div className="flex items-center gap-2">
-                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                      Signing in...
-                    </div>
-                  ) : (
-                    'Sign in'
-                  )}
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? 'Signing in...' : 'Sign in'}
                 </Button>
               </form>
             </Form>
@@ -166,11 +146,11 @@ export default function Login() {
             <Button
               type="button"
               variant="outline"
-              className="w-full h-11 font-medium hover:bg-primary/5 transition-all"
+              className="w-full"
               onClick={handleDemoMode}
             >
               <Play className="mr-2 h-4 w-4" />
-              Explore Demo Mode
+              Try Demo Mode
             </Button>
 
             <p className="text-center text-xs text-muted-foreground">
@@ -181,8 +161,8 @@ export default function Login() {
 
         <p className="text-center text-sm text-muted-foreground">
           Don't have an account?{' '}
-          <Link to="/register" className="font-medium text-primary underline-offset-4 hover:underline transition-colors">
-            Create one now
+          <Link to="/register" className="font-medium text-primary hover:underline">
+            Create one
           </Link>
         </p>
       </div>
