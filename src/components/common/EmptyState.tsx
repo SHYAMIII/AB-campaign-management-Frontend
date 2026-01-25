@@ -1,5 +1,6 @@
 import { LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 interface EmptyStateProps {
   icon: LucideIcon;
@@ -9,18 +10,25 @@ interface EmptyStateProps {
     label: string;
     onClick: () => void;
   };
+  className?: string;
 }
 
-export function EmptyState({ icon: Icon, title, description, action }: EmptyStateProps) {
+export function EmptyState({ icon: Icon, title, description, action, className }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center py-16 text-center">
-      <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-        <Icon className="h-8 w-8 text-muted-foreground" />
+    <div className={cn(
+      "flex flex-col items-center justify-center rounded-xl border border-dashed bg-card/50 p-12 text-center animate-fade-in",
+      className
+    )}>
+      <div className="relative mb-6">
+        <div className="absolute inset-0 rounded-full bg-primary/10 blur-xl animate-pulse-soft" />
+        <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+          <Icon className="h-8 w-8 text-muted-foreground" />
+        </div>
       </div>
       <h3 className="mb-2 text-lg font-semibold">{title}</h3>
-      <p className="mb-6 max-w-sm text-muted-foreground">{description}</p>
+      <p className="mb-6 max-w-sm text-sm text-muted-foreground">{description}</p>
       {action && (
-        <Button onClick={action.onClick}>
+        <Button onClick={action.onClick} className="gap-2">
           {action.label}
         </Button>
       )}

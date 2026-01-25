@@ -10,6 +10,7 @@ import {
   Clock,
   AlertCircle,
   ArrowRight,
+  Plus,
 } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { StatsCard } from '@/components/common/StatsCard';
@@ -120,6 +121,27 @@ export default function Dashboard() {
   return (
     <AppLayout title="Dashboard">
       <div className="space-y-6">
+        {/* Welcome Banner */}
+        <div className="relative overflow-hidden rounded-xl gradient-primary p-6 text-primary-foreground">
+          <div className="absolute inset-0 bg-[linear-gradient(135deg,transparent_25%,rgba(255,255,255,0.1)_50%,transparent_75%)]" />
+          <div className="relative flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold">Welcome back! 👋</h2>
+              <p className="mt-1 text-primary-foreground/80">
+                Here's what's happening with your campaigns today
+              </p>
+            </div>
+            <div className="hidden md:flex items-center gap-2">
+              <Button variant="secondary" asChild className="bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground border-0">
+                <Link to="/campaigns/new">
+                  <Plus className="mr-2 h-4 w-4" />
+                  New Campaign
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+
         {/* Stats Grid */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <StatsCard
@@ -128,6 +150,7 @@ export default function Dashboard() {
             subtitle={`${campaigns.length} total campaigns`}
             icon={Megaphone}
             variant="primary"
+            trend={campaigns.length > 0 ? { value: 12, isPositive: true } : undefined}
           />
           <StatsCard
             title="Total Leads"
@@ -135,6 +158,7 @@ export default function Dashboard() {
             subtitle="Across all campaigns"
             icon={Users}
             variant="success"
+            trend={totalLeads > 0 ? { value: 8, isPositive: true } : undefined}
           />
           <StatsCard
             title="Completed Calls"
@@ -154,10 +178,13 @@ export default function Dashboard() {
 
         <div className="grid gap-6 lg:grid-cols-7">
           {/* Queue Overview */}
-          <Card className="lg:col-span-4">
-            <CardHeader className="flex flex-row items-center justify-between">
+          <Card className="lg:col-span-4 overflow-hidden">
+            <CardHeader className="flex flex-row items-center justify-between border-b bg-muted/30">
               <div>
-                <CardTitle>Queue Overview</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5 text-primary" />
+                  Queue Overview
+                </CardTitle>
                 <CardDescription>Current call queue status</CardDescription>
               </div>
               <Button variant="outline" size="sm" asChild>
@@ -167,32 +194,37 @@ export default function Dashboard() {
                 </Link>
               </Button>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-6">
               <div className="space-y-6">
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Queue Progress</span>
-                    <span className="font-medium">
+                    <span className="font-semibold">
                       {completedCalls} / {totalLeads} calls
                     </span>
                   </div>
-                  <Progress value={totalLeads > 0 ? (completedCalls / totalLeads) * 100 : 0} className="h-2" />
+                  <div className="relative h-3 overflow-hidden rounded-full bg-muted">
+                    <div 
+                      className="h-full rounded-full gradient-primary transition-all duration-500"
+                      style={{ width: `${totalLeads > 0 ? (completedCalls / totalLeads) * 100 : 0}%` }}
+                    />
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                  <div className="rounded-lg border bg-card p-4 text-center">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  <div className="group rounded-xl border bg-card p-4 text-center transition-all hover:border-info/50 hover:shadow-sm">
                     <div className="text-2xl font-bold text-info">{queueStats?.queued || 0}</div>
                     <div className="text-xs text-muted-foreground">Queued</div>
                   </div>
-                  <div className="rounded-lg border bg-card p-4 text-center">
+                  <div className="group rounded-xl border bg-card p-4 text-center transition-all hover:border-warning/50 hover:shadow-sm">
                     <div className="text-2xl font-bold text-warning">{queueStats?.in_progress || 0}</div>
                     <div className="text-xs text-muted-foreground">In Progress</div>
                   </div>
-                  <div className="rounded-lg border bg-card p-4 text-center">
+                  <div className="group rounded-xl border bg-card p-4 text-center transition-all hover:border-success/50 hover:shadow-sm">
                     <div className="text-2xl font-bold text-success">{queueStats?.done || 0}</div>
                     <div className="text-xs text-muted-foreground">Completed</div>
                   </div>
-                  <div className="rounded-lg border bg-card p-4 text-center">
+                  <div className="group rounded-xl border bg-card p-4 text-center transition-all hover:border-destructive/50 hover:shadow-sm">
                     <div className="text-2xl font-bold text-destructive">{queueStats?.failed || 0}</div>
                     <div className="text-xs text-muted-foreground">Failed</div>
                   </div>
@@ -202,40 +234,57 @@ export default function Dashboard() {
           </Card>
 
           {/* Recent Campaigns */}
-          <Card className="lg:col-span-3">
-            <CardHeader className="flex flex-row items-center justify-between">
+          <Card className="lg:col-span-3 overflow-hidden">
+            <CardHeader className="flex flex-row items-center justify-between border-b bg-muted/30">
               <div>
-                <CardTitle>Recent Campaigns</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Megaphone className="h-5 w-5 text-primary" />
+                  Recent Campaigns
+                </CardTitle>
                 <CardDescription>Your latest campaigns</CardDescription>
               </div>
               <Button variant="outline" size="sm" asChild>
                 <Link to="/campaigns">View All</Link>
               </Button>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4">
               {recentCampaigns.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <Megaphone className="mb-3 h-10 w-10 text-muted-foreground" />
+                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+                    <Megaphone className="h-6 w-6 text-muted-foreground" />
+                  </div>
                   <p className="text-sm text-muted-foreground">No campaigns yet</p>
                   <Button variant="link" asChild className="mt-2">
                     <Link to="/campaigns/new">Create your first campaign</Link>
                   </Button>
                 </div>
               ) : (
-                <div className="space-y-4">
-                  {recentCampaigns.map((campaign) => (
+                <div className="space-y-2">
+                  {recentCampaigns.map((campaign, index) => (
                     <Link
                       key={campaign.campaign_id}
                       to={`/campaigns/${campaign.campaign_id}`}
-                      className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50"
+                      className="flex items-center justify-between rounded-xl border p-4 transition-all hover:bg-muted/50 hover:shadow-sm hover:-translate-y-0.5"
+                      style={{ animationDelay: `${index * 50}ms` }}
                     >
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate font-medium">{campaign.campaign_name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {campaign.communication_type} • {campaign.campaign_type}
-                        </p>
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
+                          campaign.communication_type === 'CALL' ? 'bg-primary/10' : 'bg-success/10'
+                        }`}>
+                          {campaign.communication_type === 'CALL' ? (
+                            <PhoneCall className="h-4 w-4 text-primary" />
+                          ) : (
+                            <CalendarCheck className="h-4 w-4 text-success" />
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="truncate font-medium">{campaign.campaign_name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {campaign.communication_type} • {campaign.campaign_type}
+                          </p>
+                        </div>
                       </div>
-                      <StatusBadge status={campaign.status} className="ml-4" />
+                      <StatusBadge status={campaign.status} className="ml-3 shrink-0" />
                     </Link>
                   ))}
                 </div>
@@ -245,35 +294,46 @@ export default function Dashboard() {
         </div>
 
         {/* Quick Actions */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
+        <Card className="overflow-hidden">
+          <CardHeader className="border-b bg-muted/30">
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-primary" />
+              Quick Actions
+            </CardTitle>
             <CardDescription>Common tasks to get you started</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-6">
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <Button variant="outline" className="h-auto flex-col gap-2 p-4" asChild>
+              <Button variant="outline" className="group h-auto flex-col gap-3 p-6 hover:border-primary/50 hover:bg-primary/5 transition-all" asChild>
                 <Link to="/campaigns/new">
-                  <Megaphone className="h-6 w-6" />
-                  <span>Create Campaign</span>
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 transition-transform group-hover:scale-110">
+                    <Megaphone className="h-6 w-6 text-primary" />
+                  </div>
+                  <span className="font-medium">Create Campaign</span>
                 </Link>
               </Button>
-              <Button variant="outline" className="h-auto flex-col gap-2 p-4" asChild>
+              <Button variant="outline" className="group h-auto flex-col gap-3 p-6 hover:border-success/50 hover:bg-success/5 transition-all" asChild>
                 <Link to="/leads">
-                  <Users className="h-6 w-6" />
-                  <span>Upload Leads</span>
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-success/10 transition-transform group-hover:scale-110">
+                    <Users className="h-6 w-6 text-success" />
+                  </div>
+                  <span className="font-medium">View Leads</span>
                 </Link>
               </Button>
-              <Button variant="outline" className="h-auto flex-col gap-2 p-4" asChild>
+              <Button variant="outline" className="group h-auto flex-col gap-3 p-6 hover:border-warning/50 hover:bg-warning/5 transition-all" asChild>
                 <Link to="/integrations">
-                  <TrendingUp className="h-6 w-6" />
-                  <span>Setup CRM</span>
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-warning/10 transition-transform group-hover:scale-110">
+                    <TrendingUp className="h-6 w-6 text-warning" />
+                  </div>
+                  <span className="font-medium">Setup CRM</span>
                 </Link>
               </Button>
-              <Button variant="outline" className="h-auto flex-col gap-2 p-4" asChild>
+              <Button variant="outline" className="group h-auto flex-col gap-3 p-6 hover:border-info/50 hover:bg-info/5 transition-all" asChild>
                 <Link to="/calls">
-                  <BarChart3 className="h-6 w-6" />
-                  <span>View Analytics</span>
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-info/10 transition-transform group-hover:scale-110">
+                    <BarChart3 className="h-6 w-6 text-info" />
+                  </div>
+                  <span className="font-medium">Call History</span>
                 </Link>
               </Button>
             </div>

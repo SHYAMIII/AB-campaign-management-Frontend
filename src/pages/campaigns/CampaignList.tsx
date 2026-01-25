@@ -25,11 +25,63 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { campaignApi } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import type { Campaign } from '@/types';
+import type { Campaign, CampaignStatus, CampaignType, CommunicationType } from '@/types';
+
+// Demo data
+const DEMO_CAMPAIGNS: Campaign[] = [
+  {
+    campaign_id: 'demo-1',
+    campaign_name: 'Q1 Enterprise Outreach',
+    campaign_type: 'CRM' as CampaignType,
+    communication_type: 'CALL' as CommunicationType,
+    status: 'ACTIVE' as CampaignStatus,
+    start_time: '09:00',
+    end_time: '17:00',
+    timezone: 'America/New_York',
+    campaign_prompt: 'Schedule product demos',
+    agent_name: 'Sarah',
+    created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    campaign_id: 'demo-2',
+    campaign_name: 'Product Launch Email',
+    campaign_type: 'EXCEL' as CampaignType,
+    communication_type: 'EMAIL' as CommunicationType,
+    status: 'PAUSED' as CampaignStatus,
+    start_time: '08:00',
+    end_time: '18:00',
+    timezone: 'America/Los_Angeles',
+    created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    campaign_id: 'demo-3',
+    campaign_name: 'SMB Follow-up Calls',
+    campaign_type: 'EXCEL' as CampaignType,
+    communication_type: 'CALL' as CommunicationType,
+    status: 'DRAFT' as CampaignStatus,
+    start_time: '10:00',
+    end_time: '16:00',
+    timezone: 'America/Chicago',
+    created_at: new Date().toISOString(),
+  },
+  {
+    campaign_id: 'demo-4',
+    campaign_name: 'Re-engagement Campaign',
+    campaign_type: 'CRM' as CampaignType,
+    communication_type: 'EMAIL' as CommunicationType,
+    status: 'ACTIVE' as CampaignStatus,
+    start_time: '07:00',
+    end_time: '19:00',
+    timezone: 'Europe/London',
+    created_at: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+];
 
 export default function CampaignList() {
   const navigate = useNavigate();
+  const { isDemoMode } = useAuth();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -37,9 +89,14 @@ export default function CampaignList() {
 
   useEffect(() => {
     loadCampaigns();
-  }, []);
+  }, [isDemoMode]);
 
   const loadCampaigns = async () => {
+    if (isDemoMode) {
+      setCampaigns(DEMO_CAMPAIGNS);
+      setIsLoading(false);
+      return;
+    }
     try {
       const response = await campaignApi.list();
       setCampaigns(response.campaigns || []);
