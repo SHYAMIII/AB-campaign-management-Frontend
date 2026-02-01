@@ -41,9 +41,11 @@ export default function Login() {
   }
 
   const onSubmit = async (data: LoginFormData) => {
+    console.log('onSubmit called with data:', data);
     setIsLoading(true);
     try {
       await login(data.email, data.password);
+      console.log('Login successful, navigating to /dashboard');
       toast.success('Welcome back!');
       navigate('/dashboard');
     } catch (error) {

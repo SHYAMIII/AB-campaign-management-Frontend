@@ -58,7 +58,7 @@ const DEMO_CAMPAIGNS: CampaignOption[] = [
 ];
 
 export default function LeadList() {
-  const { isDemoMode } = useAuth();
+  const { isDemoMode, refreshTrigger } = useAuth();
   const [calls, setCalls] = useState<QueuedCall[]>([]);
   const [campaigns, setCampaigns] = useState<CampaignOption[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -68,7 +68,7 @@ export default function LeadList() {
 
   useEffect(() => {
     loadData();
-  }, [statusFilter, campaignFilter, isDemoMode]);
+  }, [statusFilter, campaignFilter, isDemoMode, refreshTrigger]);
 
   const loadData = async () => {
     if (isDemoMode) {

@@ -81,7 +81,7 @@ const DEMO_CAMPAIGNS: Campaign[] = [
 
 export default function CampaignList() {
   const navigate = useNavigate();
-  const { isDemoMode } = useAuth();
+  const { isDemoMode, refreshTrigger } = useAuth();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -89,7 +89,7 @@ export default function CampaignList() {
 
   useEffect(() => {
     loadCampaigns();
-  }, [isDemoMode]);
+  }, [isDemoMode, refreshTrigger]);
 
   const loadCampaigns = async () => {
     if (isDemoMode) {

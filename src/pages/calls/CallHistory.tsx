@@ -79,7 +79,7 @@ const DEMO_STATS: QueueStats = {
 };
 
 export default function CallHistory() {
-  const { isDemoMode } = useAuth();
+  const { isDemoMode, refreshTrigger } = useAuth();
   const [calls, setCalls] = useState<QueuedCall[]>([]);
   const [stats, setStats] = useState<QueueStats | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -89,7 +89,7 @@ export default function CallHistory() {
 
   useEffect(() => {
     loadData();
-  }, [statusFilter, isDemoMode]);
+  }, [statusFilter, isDemoMode, refreshTrigger]);
 
   const loadData = async () => {
     if (isDemoMode) {

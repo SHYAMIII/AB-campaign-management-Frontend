@@ -6,15 +6,25 @@ async function apiRequest<T>(
   options: RequestInit = {}
 ): Promise<T> {
   const agentId = localStorage.getItem('agent_id');
+  const authToken = localStorage.getItem('session_token') || localStorage.getItem('token');
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(agentId && { 'X-Agent-ID': agentId }),
+    ...(authToken && { 'Authorization': `Bearer ${authToken}` }),
+    ...options.headers,
+  };
+
+  // DEBUG: log auth token and outgoing headers to verify Authorization is sent
+  // Remove these logs after verification
+  // eslint-disable-next-line no-console
+  console.log('apiRequest authToken:', authToken);
+  // eslint-disable-next-line no-console
+  console.log('apiRequest headers:', headers);
 
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(agentId && { 'X-Agent-ID': agentId }),
-      ...options.headers,
-    },
+    headers,
   });
 
   if (response.status === 401) {
@@ -28,8 +38,42 @@ async function apiRequest<T>(
   }
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: 'Request failed' }));
-    throw new Error(error.detail || 'Request failed');
+    const errorBody = await response.json().catch(() => ({ detail: 'Request failed' }));
+
+    // Normalize error message for UI — handle arrays (e.g. validation errors), objects, and strings
+    let message = 'Request failed';
+
+    if (errorBody) {
+      if (typeof errorBody === 'string') {
+        message = errorBody;
+      } else if (errorBody.detail) {
+        if (Array.isArray(errorBody.detail)) {
+          message = errorBody.detail
+            .map((d: any) => {
+              if (typeof d === 'string') return d;
+              const msg = d.msg || d.message;
+              if (msg) {
+                if (d.loc && Array.isArray(d.loc)) {
+                  return `${d.loc.join('.')}: ${msg}`;
+                }
+                return msg;
+              }
+              return JSON.stringify(d);
+            })
+            .join('; ');
+        } else if (typeof errorBody.detail === 'string') {
+          message = errorBody.detail;
+        } else {
+          message = JSON.stringify(errorBody.detail);
+        }
+      } else if (errorBody.message) {
+        message = errorBody.message;
+      } else {
+        message = JSON.stringify(errorBody);
+      }
+    }
+
+    throw new Error(message);
   }
 
   return response.json();
@@ -219,12 +263,14 @@ export const excelApi = {
     formData.append('file', file);
 
     const agentId = localStorage.getItem('agent_id');
+    const authToken = localStorage.getItem('session_token') || localStorage.getItem('token');
 
     const response = await fetch(`${API_BASE_URL}/upload-campaign-excel/${campaignId}`, {
       method: 'POST',
       credentials: 'include',
       headers: {
         ...(agentId && { 'X-Agent-ID': agentId }),
+        ...(authToken && { 'Authorization': `Bearer ${authToken}` }),
       },
       body: formData,
     });

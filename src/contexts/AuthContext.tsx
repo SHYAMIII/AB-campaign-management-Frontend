@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { authApi, agentApi } from '@/lib/api';
 import type { User, Agent } from '@/types';
 
@@ -15,6 +16,7 @@ interface AuthContextType {
   switchAgent: (agentId: string) => Promise<void>;
   refreshAgents: () => Promise<void>;
   enterDemoMode: () => void;
+  refreshTrigger: number; // Counter that increments when data should refresh
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -47,6 +49,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [currentAgent, setCurrentAgent] = useState<Agent | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDemoMode, setIsDemoMode] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const queryClient = useQueryClient();
 
   const isAuthenticated = !!user;
 
@@ -92,15 +96,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const login = async (email: string, password: string) => {
+    console.log('AuthContext login called with:', email, password);
     const response = await authApi.login(email, password);
+    console.log('AuthContext login API response:', response);
     const userData: User = {
-      email: response.email,
-      agent_id: response.agent_id,
-      can_manage_agents: response.can_manage_agents,
+      email: response.current_agent?.email || response.user?.email || response.email,
+      agent_id: response.current_agent?.agent_id || response.user?.agent_id || response.agent_id,
+      can_manage_agents: response.current_agent?.can_manage_agents ?? response.user?.can_manage_agents ?? response.can_manage_agents ?? true,
     };
     setUser(userData);
-    localStorage.setItem('agent_id', response.agent_id);
+    console.log('User set to:', userData);
+    localStorage.setItem('agent_id', userData.agent_id);
     localStorage.setItem('user', JSON.stringify(userData));
+    if (response.session_token) {
+      localStorage.setItem('session_token', response.session_token);
+    }
+    if (response.current_agent) {
+      localStorage.setItem('current_agent', JSON.stringify(response.current_agent));
+    }
+    if (response.token || response.access_token) {
+      localStorage.setItem('token', response.token || response.access_token);
+    }
     localStorage.removeItem('demo_mode');
     setIsDemoMode(false);
     await refreshAgents();
@@ -122,6 +138,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsDemoMode(false);
       localStorage.removeItem('agent_id');
       localStorage.removeItem('user');
+      localStorage.removeItem('token');
+      localStorage.removeItem('session_token');
+      localStorage.removeItem('current_agent');
       localStorage.removeItem('demo_mode');
     }
   };
@@ -147,12 +166,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (isDemoMode) {
       const agent = DEMO_AGENTS.find(a => a.agent_id === agentId);
       setCurrentAgent(agent || null);
+      // Trigger data refresh for all components
+      setRefreshTrigger(prev => prev + 1);
+      // Invalidate all queries to refresh data for the new agent
+      queryClient.invalidateQueries();
       return;
     }
     const response = await agentApi.switch(agentId);
     localStorage.setItem('agent_id', agentId);
     const agent = agents.find(a => a.agent_id === agentId);
     setCurrentAgent(agent || null);
+    // Trigger data refresh for all components
+    setRefreshTrigger(prev => prev + 1);
+    // Invalidate all queries to refresh data for the new agent
+    queryClient.invalidateQueries();
   };
 
   return (
@@ -170,6 +197,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         switchAgent,
         refreshAgents,
         enterDemoMode,
+        refreshTrigger,
       }}
     >
       {children}

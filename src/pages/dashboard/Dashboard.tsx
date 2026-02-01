@@ -70,14 +70,14 @@ const DEMO_QUEUE_STATS: QueueStats = {
 };
 
 export default function Dashboard() {
-  const { isDemoMode } = useAuth();
+  const { isDemoMode, refreshTrigger } = useAuth();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [queueStats, setQueueStats] = useState<QueueStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     loadData();
-  }, [isDemoMode]);
+  }, [isDemoMode, refreshTrigger]);
 
   const loadData = async () => {
     if (isDemoMode) {
