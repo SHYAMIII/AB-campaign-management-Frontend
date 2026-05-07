@@ -123,11 +123,27 @@ export const campaignApi = {
     vapi_model?: string;
     agent_name?: string;
     logged_in_user_email?: string;
-  }) =>
-    apiRequest<{ message: string; campaign_id: string }>('/create-campaign', {
+  }) => {
+    const payload = {
+      campaign_name: data.campaign_name,
+      campaign_type: data.campaign_type,
+      communication_type: data.communication_type,
+      metadata: {
+        start_time: data.start_time,
+      },
+      end_time: data.end_time,
+      timezone: data.timezone,
+      campaign_prompt: data.campaign_prompt,
+      vapi_voice_id: data.vapi_voice_id,
+      vapi_model: data.vapi_model,
+      agent_name: data.agent_name,
+      logged_in_user_email: data.logged_in_user_email,
+    };
+    return apiRequest<{ message: string; campaign_id: string }>('/create-campaign', {
       method: 'POST',
-      body: JSON.stringify(data),
-    }),
+      body: JSON.stringify(payload),
+    });
+  },
 
   update: (campaignId: string, data: Partial<any>) =>
     apiRequest<{ message: string }>(`/update-campaign/${campaignId}`, {
